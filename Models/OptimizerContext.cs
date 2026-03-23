@@ -9,10 +9,12 @@ namespace OptiscalerClient.Models
     /// </summary>
     [JsonSourceGenerationOptions(WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonSerializable(typeof(AppConfiguration))]
+    [JsonSerializable(typeof(ScanSourcesConfig))]
     [JsonSerializable(typeof(ComponentVersions))]
     [JsonSerializable(typeof(InstallationManifest))]
     [JsonSerializable(typeof(List<Game>))]
     [JsonSerializable(typeof(Game))]
+    [JsonSerializable(typeof(List<string>))]
     internal partial class OptimizerContext : JsonSerializerContext
     {
     }

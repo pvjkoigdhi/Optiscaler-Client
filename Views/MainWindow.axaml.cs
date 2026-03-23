@@ -30,6 +30,8 @@ namespace OptiscalerClient.Views
         private GpuInfo? _lastDetectedGpu;
         private ScrollViewer? _gameListScrollViewer;
         private bool _isInitializingLanguage = true;
+        private DispatcherTimer? _scanDotTimer;
+        private double _scanDotPhase = 0;
 
         private void InitializeComponent()
         {
@@ -447,7 +449,7 @@ namespace OptiscalerClient.Views
                     var updateMsg = string.Format(updateMsgFormat, appUpdateService.LatestVersion);
 
                     var dialog = new ConfirmDialog(this, updateTitle, updateMsg, false);
-                    if (await dialog.ShowDialog<bool>(this))
+                    if (await dialog.ShowDialog<bool>(this)) // true if confirmed
                     {
                         btnCheckUpdates.Content = GetResourceString("TxtUpdatingApp", "Updating...");
                         
@@ -570,6 +572,7 @@ namespace OptiscalerClient.Views
             if (btnScan != null) btnScan.IsEnabled = false;
             if (txtStatus != null) txtStatus.Text = GetResourceString("TxtScanningShort", "Scanning for games...");
             if (overlayScanning != null) overlayScanning.IsVisible = true;
+            StartScanDotAnimation();
 
             try
             {
@@ -627,6 +630,7 @@ namespace OptiscalerClient.Views
             }
             finally
             {
+                StopScanDotAnimation();
                 if (btnScan != null) btnScan.IsEnabled = true;
                 if (overlayScanning != null) overlayScanning.IsVisible = false;
             }
@@ -806,6 +810,42 @@ namespace OptiscalerClient.Views
                     }
                 });
             }
+        }
+
+        private void StartScanDotAnimation()
+        {
+            var dot1 = this.FindControl<Ellipse>("ScanDot1");
+            var dot2 = this.FindControl<Ellipse>("ScanDot2");
+            var dot3 = this.FindControl<Ellipse>("ScanDot3");
+            if (dot1 == null || dot2 == null || dot3 == null) return;
+
+            var t1 = new Avalonia.Media.TranslateTransform();
+            var t2 = new Avalonia.Media.TranslateTransform();
+            var t3 = new Avalonia.Media.TranslateTransform();
+            dot1.RenderTransform = t1;
+            dot2.RenderTransform = t2;
+            dot3.RenderTransform = t3;
+
+            const double amplitude = 10;
+            const double step = 0.12;
+            const double phaseOffset = Math.PI * 2 / 3;
+
+            _scanDotPhase = 0;
+            _scanDotTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _scanDotTimer.Tick += (s, e) =>
+            {
+                _scanDotPhase += step;
+                t1.Y = -amplitude * Math.Max(0, Math.Sin(_scanDotPhase));
+                t2.Y = -amplitude * Math.Max(0, Math.Sin(_scanDotPhase + phaseOffset));
+                t3.Y = -amplitude * Math.Max(0, Math.Sin(_scanDotPhase + phaseOffset * 2));
+            };
+            _scanDotTimer.Start();
+        }
+
+        private void StopScanDotAnimation()
+        {
+            _scanDotTimer?.Stop();
+            _scanDotTimer = null;
         }
 
         private string GetResourceString(string key, string fallback)
