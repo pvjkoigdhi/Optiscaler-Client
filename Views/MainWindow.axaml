@@ -561,6 +561,17 @@
                                  <ComboBoxItem Tag="en" Content="English"/>
                                  <ComboBoxItem Tag="es" Content="Español"/>
                                  <ComboBoxItem Tag="pt-BR" Content="Português (Brasil)"/>
+                                 <ComboBoxItem Tag="fr" Content="Français"/>
+                                 <ComboBoxItem Tag="it" Content="Italiano"/>
+                                 <ComboBoxItem Tag="ru" Content="Русский"/>
+                                 <ComboBoxItem Tag="de" Content="Deutsch"/>
+                                 <ComboBoxItem Tag="ja" Content="日本語"/>
+                                 <ComboBoxItem Tag="zh-CN" Content="简体中文"/>
+                                 <ComboBoxItem Tag="zh-TW" Content="繁體中文"/>
+                                 <ComboBoxItem Tag="ko" Content="한국어"/>
+                                 <ComboBoxItem Tag="pl" Content="Polski"/>
+                                 <ComboBoxItem Tag="tr" Content="Türkçe"/>
+                                 <ComboBoxItem Tag="nl" Content="Nederlands"/>
                              </ComboBox>
                          </Grid>
                      </Border>
