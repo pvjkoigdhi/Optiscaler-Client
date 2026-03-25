@@ -420,6 +420,17 @@ namespace OptiscalerClient.Views
                         if (bdProgress != null) bdProgress.IsVisible = false;
                     });
                 }
+                catch (VersionUnavailableException vex)
+                {
+                    isDownloadingOpti = false;
+                    Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                    var title = GetResourceString("TxtError", "Error");
+                    var msg = GetResourceString(
+                        "TxtVersionUnavailable",
+                        "Cannot install OptiScaler v{0} right now.\n\nCheck your internet connection and try again later.");
+                    await new ConfirmDialog(this, title, string.Format(msg, vex.Version)).ShowDialog<object>(this);
+                    return;
+                }
                 catch (Exception ex)
                 {
                     isDownloadingOpti = false;

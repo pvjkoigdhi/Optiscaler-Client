@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace OptiscalerClient.Models
@@ -53,5 +54,28 @@ namespace OptiscalerClient.Models
         public string? OptiScalerVersion { get; set; }
         public string? FakenvapiVersion { get; set; }
         public string? NukemFGVersion { get; set; }
+    }
+
+    /// <summary>
+    /// A single OptiScaler release entry stored in the local releases cache.
+    /// Only metadata is stored — no binaries are downloaded at this stage.
+    /// </summary>
+    public class OptiScalerReleaseEntry
+    {
+        public string Version { get; set; } = string.Empty;
+        public string? DownloadUrl { get; set; }
+        public bool IsBeta { get; set; }
+        public bool IsLatestStable { get; set; }
+        public bool IsLatestBeta { get; set; }
+    }
+
+    /// <summary>
+    /// Local cache of OptiScaler release metadata fetched from GitHub.
+    /// Updated on each successful API call and merged with existing entries.
+    /// </summary>
+    public class OptiScalerReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<OptiScalerReleaseEntry> Releases { get; set; } = new();
     }
 }

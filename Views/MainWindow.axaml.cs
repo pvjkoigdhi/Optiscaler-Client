@@ -758,12 +758,12 @@ namespace OptiscalerClient.Views
         {
             if (game.IsOptiscalerInstalled)
             {
-                button.Content = "🗑️ Fast Uninstall";
+                button.Content = "🗑️ Quick Uninstall";
                 button.Foreground = this.FindResource("BrAccentWarm") as IBrush ?? Brushes.Orange;
             }
             else
             {
-                button.Content = "✦ Fast Install";
+                button.Content = "✦ Quick Install";
                 button.Foreground = this.FindResource("BrAccent") as IBrush ?? Brushes.Purple;
             }
         }

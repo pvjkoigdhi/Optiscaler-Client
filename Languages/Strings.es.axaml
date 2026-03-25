@@ -99,6 +99,9 @@
     <x:String x:Key="TxtInstallingFormat">Descargando OptiScaler v{0}... {1}%</x:String>
     <x:String x:Key="TxtInstallSuccessFormat">¡{0} instalado exitosamente!</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">Error al descargar OptiScaler: {0}</x:String>
+    <x:String x:Key="TxtVersionUnavailable">No se puede instalar OptiScaler v{0} en este momento.
+
+Esta versión no está disponible para descarga. Verificá tu conexión a internet e intentá de nuevo más tarde.</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler desinstalado exitosamente.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Error en la desinstalación: {0}</x:String>
 

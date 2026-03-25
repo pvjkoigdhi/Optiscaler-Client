@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using OptiscalerClient.Models;
 
 namespace OptiscalerClient.Models
@@ -15,6 +15,9 @@ namespace OptiscalerClient.Models
     [JsonSerializable(typeof(List<Game>))]
     [JsonSerializable(typeof(Game))]
     [JsonSerializable(typeof(List<string>))]
+    [JsonSerializable(typeof(OptiScalerReleaseEntry))]
+    [JsonSerializable(typeof(OptiScalerReleasesCache))]
+    [JsonSerializable(typeof(List<OptiScalerReleaseEntry>))]
     internal partial class OptimizerContext : JsonSerializerContext
     {
     }

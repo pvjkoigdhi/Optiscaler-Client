@@ -20,6 +20,7 @@ namespace OptiscalerClient.Services
         private readonly string _cacheDir;
         private readonly string _versionFile;
         private readonly string _configFile;
+        private readonly string _releasesCacheFile;
         private readonly HttpClient _httpClient;
 
         public AppConfiguration Config => _config;
@@ -34,6 +35,8 @@ namespace OptiscalerClient.Services
         private static string? _cachedFakenvapiVersion = null;
         private static string? _cachedNukemFGVersion = null;
         private static DateTime _lastApiCheckTime = DateTime.MinValue;
+        // Persistent local cache of release metadata (version names + download URLs)
+        private static OptiScalerReleasesCache _releasesCache = new();
 
         public System.Collections.Generic.List<string> OptiScalerAvailableVersions
             => _cachedOptiScalerVersions ?? GetDownloadedOptiScalerVersions();
@@ -64,6 +67,7 @@ namespace OptiscalerClient.Services
             _cacheDir = Path.Combine(_baseDir, "Cache");
             _versionFile = Path.Combine(_baseDir, "versions.json");
             _configFile = Path.Combine(_baseDir, "config.json");
+            _releasesCacheFile = Path.Combine(_baseDir, "releases_cache.json");
 
             Directory.CreateDirectory(_cacheDir);
 
@@ -72,6 +76,7 @@ namespace OptiscalerClient.Services
 
             LoadConfiguration();
             LoadLocalVersions();
+            LoadReleasesCache();
         }
 
         private void LoadConfiguration()
@@ -143,6 +148,116 @@ namespace OptiscalerClient.Services
             catch { /* Ignore save errors */ }
         }
 
+        private void LoadReleasesCache()
+        {
+            // Only load once per process (static field)
+            if (_releasesCache.Releases.Count > 0) return;
+            if (!File.Exists(_releasesCacheFile)) return;
+            try
+            {
+                var json = File.ReadAllText(_releasesCacheFile);
+                var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.OptiScalerReleasesCache);
+                if (loaded != null)
+                {
+                    _releasesCache = loaded;
+                    RebuildInMemoryCacheFromReleases();
+                    DebugWindow.Log($"[ReleasesCache] Loaded {_releasesCache.Releases.Count} entries from local cache (last updated: {_releasesCache.LastUpdated})");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ReleasesCache] Failed to load: {ex.Message}");
+            }
+        }
+
+        private void SaveReleasesCache()
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(_releasesCache, OptimizerContext.Default.OptiScalerReleasesCache);
+                File.WriteAllText(_releasesCacheFile, json);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ReleasesCache] Failed to save: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Merges newly fetched release entries into the persistent cache.
+        /// Adds any versions not already present; never removes existing ones.
+        /// </summary>
+        private void MergeIntoReleasesCache(System.Collections.Generic.IEnumerable<OptiScalerReleaseEntry> newEntries)
+        {
+            var existingVersions = new System.Collections.Generic.HashSet<string>(
+                _releasesCache.Releases.Select(r => r.Version),
+                StringComparer.OrdinalIgnoreCase);
+
+            // Reset latest flags before updating
+foreach (var existing in _releasesCache.Releases)
+            {
+                existing.IsLatestStable = false;
+                existing.IsLatestBeta = false;
+            }
+
+            foreach (var entry in newEntries)
+            {
+                if (!existingVersions.Contains(entry.Version))
+                {
+                    _releasesCache.Releases.Add(entry);
+                    existingVersions.Add(entry.Version);
+                }
+                else
+                {
+                    // Update download URL and flags for existing entry if missing
+                    var existing = _releasesCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (existing != null)
+                    {
+                        if (string.IsNullOrEmpty(existing.DownloadUrl))
+                            existing.DownloadUrl = entry.DownloadUrl;
+                        existing.IsLatestStable = entry.IsLatestStable;
+                        existing.IsLatestBeta = entry.IsLatestBeta;
+                        existing.IsBeta = entry.IsBeta;
+                    }
+                }
+            }
+
+            _releasesCache.LastUpdated = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Rebuilds the static in-memory version lists from the persistent releases cache.
+        /// </summary>
+        private void RebuildInMemoryCacheFromReleases()
+        {
+            if (_releasesCache.Releases.Count == 0) return;
+
+            var all = _releasesCache.Releases;
+
+            _cachedBetaVersions = new System.Collections.Generic.HashSet<string>(
+                all.Where(r => r.IsBeta).Select(r => r.Version),
+                StringComparer.OrdinalIgnoreCase);
+
+            _cachedLatestBetaVersion = all.FirstOrDefault(r => r.IsLatestBeta)?.Version
+                ?? all.FirstOrDefault(r => r.IsBeta)?.Version;
+
+            _cachedLatestStableVersion = all.FirstOrDefault(r => r.IsLatestStable)?.Version
+                ?? all.FirstOrDefault(r => !r.IsBeta)?.Version;
+
+            // Stable versions first (latest stable at top), then betas
+            var stables = all.Where(r => !r.IsBeta).Select(r => r.Version).ToList();
+            var betas   = all.Where(r => r.IsBeta).Select(r => r.Version).ToList();
+            var merged  = new System.Collections.Generic.List<string>();
+            merged.AddRange(stables);
+            merged.AddRange(betas);
+
+            if (merged.Count > 0)
+                _cachedOptiScalerVersions = merged.Distinct().ToList();
+
+            DebugWindow.Log($"[ReleasesCache] Rebuilt in-memory cache: {stables.Count} stable + {betas.Count} beta versions");
+        }
+
         public async Task CheckForUpdatesAsync()
         {
             LastError = null;
@@ -152,35 +267,39 @@ namespace OptiscalerClient.Services
                 if (_cachedOptiScalerVersions == null || (DateTime.Now - _lastApiCheckTime).TotalMinutes > 15)
                 {
                     DebugWindow.Log($"[ComponentCheck] Fetching updates from GitHub API (Rates: {(DateTime.Now - _lastApiCheckTime).ToString(@"hh\:mm\:ss")} since last check)");
-                    // Always fetch both stable and beta versions
-                    var optiVersionsTask = FetchAllComponentVersionsAsync(_config.OptiScaler);
-                    var optiBetasTask = FetchAllComponentVersionsAsync(_config.OptiScalerBetas);
-                    var fakeTask = CheckComponentUpdateAsync("Fakenvapi", _config.Fakenvapi);
-                    var nukemTask = CheckComponentUpdateAsync("NukemFG", _config.NukemFG);
-
-                    await Task.WhenAll(optiVersionsTask, optiBetasTask, fakeTask, nukemTask);
-
-                    var (stableVersions, latestStable) = await optiVersionsTask;
-                    var (betaVersions, latestBeta) = await optiBetasTask;
-
-                    // Track which versions are betas and latest versions
-                    _cachedBetaVersions = new System.Collections.Generic.HashSet<string>(betaVersions ?? new());
-                    _cachedLatestBetaVersion = latestBeta ?? betaVersions?.FirstOrDefault();
-                    _cachedLatestStableVersion = latestStable ?? stableVersions?.FirstOrDefault();
-
-                    // Merge stable and beta versions, removing duplicates
-                    var allVersions = new System.Collections.Generic.List<string>();
-                    if (stableVersions != null) allVersions.AddRange(stableVersions);
-                    if (betaVersions != null) allVersions.AddRange(betaVersions);
-                    
-                    if (allVersions.Count > 0)
+                    try
                     {
-                        _cachedOptiScalerVersions = allVersions.Distinct().ToList();
-                    }
-                    _cachedFakenvapiVersion = await fakeTask ?? _cachedFakenvapiVersion;
-                    _cachedNukemFGVersion = await nukemTask ?? _cachedNukemFGVersion;
+                        // Always fetch both stable and beta versions
+                        var optiVersionsTask = FetchAllReleasesWithUrlAsync(_config.OptiScaler, isBeta: false);
+                        var optiBetasTask    = FetchAllReleasesWithUrlAsync(_config.OptiScalerBetas, isBeta: true);
+                        var fakeTask  = CheckComponentUpdateAsync("Fakenvapi", _config.Fakenvapi);
+                        var nukemTask = CheckComponentUpdateAsync("NukemFG", _config.NukemFG);
 
-                    _lastApiCheckTime = DateTime.Now;
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, fakeTask, nukemTask);
+
+                        var stableEntries = await optiVersionsTask;
+                        var betaEntries   = await optiBetasTask;
+                        var allNewEntries = stableEntries.Concat(betaEntries).ToList();
+
+                        if (allNewEntries.Count > 0)
+                        {
+                            MergeIntoReleasesCache(allNewEntries);
+                            SaveReleasesCache();
+                            RebuildInMemoryCacheFromReleases();
+                        }
+
+                        _cachedFakenvapiVersion = await fakeTask ?? _cachedFakenvapiVersion;
+                        _cachedNukemFGVersion   = await nukemTask ?? _cachedNukemFGVersion;
+                        _lastApiCheckTime = DateTime.Now;
+                    }
+                    catch (Exception apiEx)
+                    {
+                        // API failed — keep using whatever is already in the cache
+                        DebugWindow.Log($"[ComponentCheck] GitHub API call failed (will use local cache): {apiEx.Message}");
+                        LastError = apiEx;
+                        // Still rebuild from cache in case it was just loaded
+                        RebuildInMemoryCacheFromReleases();
+                    }
                 }
 
                 // Select default version based on user preference
@@ -199,8 +318,8 @@ namespace OptiscalerClient.Services
 
                 // Check if updates are available
                 IsOptiScalerUpdateAvailable = IsUpdateAvailable(_localVersions.OptiScalerVersion, _remoteVersions.OptiScalerVersion);
-                IsFakenvapiUpdateAvailable = IsUpdateAvailable(_localVersions.FakenvapiVersion, _remoteVersions.FakenvapiVersion);
-                IsNukemFGUpdateAvailable = IsUpdateAvailable(_localVersions.NukemFGVersion, _remoteVersions.NukemFGVersion);
+                IsFakenvapiUpdateAvailable  = IsUpdateAvailable(_localVersions.FakenvapiVersion,  _remoteVersions.FakenvapiVersion);
+                IsNukemFGUpdateAvailable    = IsUpdateAvailable(_localVersions.NukemFGVersion,    _remoteVersions.NukemFGVersion);
 
                 DebugWindow.Log($"[ComponentUpdate] Status: Opti={IsOptiScalerUpdateAvailable} (Local={_localVersions.OptiScalerVersion}, Remote={_remoteVersions.OptiScalerVersion})");
                 DebugWindow.Log($"[ComponentUpdate] Status: Fake={IsFakenvapiUpdateAvailable} (Local={_localVersions.FakenvapiVersion}, Remote={_remoteVersions.FakenvapiVersion})");
@@ -244,6 +363,103 @@ namespace OptiscalerClient.Services
             return null;
         }
 
+        private async Task<System.Collections.Generic.List<OptiScalerReleaseEntry>> FetchAllReleasesWithUrlAsync(
+            RepositoryConfig config, bool isBeta)
+        {
+            var entries  = new System.Collections.Generic.List<OptiScalerReleaseEntry>();
+            var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
+            bool latestStableMarked = false;
+            bool latestBetaMarked   = false;
+
+            try
+            {
+                if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
+                {
+                    DebugWindow.Log($"[FetchVersions] Skipping {repoLabel}: empty config");
+                    return entries;
+                }
+
+                var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=30";
+                DebugWindow.Log($"[FetchVersions] GET {url}");
+                var response = await _httpClient.GetAsync(url);
+                DebugWindow.Log($"[FetchVersions] {repoLabel} → HTTP {(int)response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                foreach (var element in doc.RootElement.EnumerateArray())
+                {
+                    if (!element.TryGetProperty("tag_name", out var tagName)) continue;
+                    var version = tagName.GetString();
+                    if (string.IsNullOrEmpty(version)) continue;
+
+                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        version = version.Substring(1);
+
+                    // Find best download URL from assets
+                    string? downloadUrl = null;
+                    if (element.TryGetProperty("assets", out var assets))
+                    {
+                        foreach (var asset in assets.EnumerateArray())
+                        {
+                            if (asset.TryGetProperty("browser_download_url", out var urlProp))
+                            {
+                                var assetUrl = urlProp.GetString();
+                                if (assetUrl != null &&
+                                    (assetUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                     assetUrl.EndsWith(".7z",  StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    downloadUrl = assetUrl;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    bool isPrerelease = element.TryGetProperty("prerelease", out var pr) && pr.GetBoolean();
+
+                    bool isThisLatestStable = false;
+                    bool isThisLatestBeta   = false;
+
+                    if (isBeta)
+                    {
+                        if (!latestBetaMarked)
+                        {
+                            isThisLatestBeta = true;
+                            latestBetaMarked = true;
+                        }
+                    }
+                    else
+                    {
+                        if (!latestStableMarked && !isPrerelease)
+                        {
+                            isThisLatestStable = true;
+                            latestStableMarked = true;
+                        }
+                    }
+
+                    entries.Add(new OptiScalerReleaseEntry
+                    {
+                        Version        = version,
+                        DownloadUrl    = downloadUrl,
+                        IsBeta         = isBeta,
+                        IsLatestStable = isThisLatestStable,
+                        IsLatestBeta   = isThisLatestBeta,
+                    });
+                }
+
+                DebugWindow.Log($"[FetchVersions] {repoLabel} → {entries.Count} release(s) fetched");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[FetchVersions] {repoLabel} → ERROR: {ex.Message}");
+                throw; // Let CheckForUpdatesAsync handle the fallback
+            }
+
+            return entries;
+        }
+
+        // Legacy helper kept for CheckComponentUpdateAsync compatibility
         private async Task<(System.Collections.Generic.List<string> versions, string? latestVersion)> FetchAllComponentVersionsAsync(RepositoryConfig config)
         {
             var versions = new System.Collections.Generic.List<string>();
@@ -369,69 +585,111 @@ namespace OptiscalerClient.Services
             
             try
             {
-                // Try to retrieve release from stable repo first, then beta repo
+                // 1. Try to get the download URL from the local releases cache first
+                string? cachedDownloadUrl = _releasesCache.Releases
+                    .FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
+                    ?.DownloadUrl;
+
+                // 2. Try to retrieve release from GitHub API (stable repo → beta repo, with/without v prefix)
                 HttpResponseMessage? response = null;
                 string? json = null;
                 string repoSource = "";
-                
-                // Try stable repo with v prefix
-                var url = $"https://api.github.com/repos/{_config.OptiScaler.RepoOwner}/{_config.OptiScaler.RepoName}/releases/tags/v{version}";
-                DebugWindow.Log($"[Download] Trying stable repo (with v prefix): {url}");
-                response = await _httpClient.GetAsync(url);
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Try stable repo without v prefix
-                    url = $"https://api.github.com/repos/{_config.OptiScaler.RepoOwner}/{_config.OptiScaler.RepoName}/releases/tags/{version}";
-                    DebugWindow.Log($"[Download] Trying stable repo (without v prefix): {url}");
-                    response = await _httpClient.GetAsync(url);
-                }
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Try beta repo with v prefix
-                    url = $"https://api.github.com/repos/{_config.OptiScalerBetas.RepoOwner}/{_config.OptiScalerBetas.RepoName}/releases/tags/v{version}";
-                    DebugWindow.Log($"[Download] Trying beta repo (with v prefix): {url}");
-                    response = await _httpClient.GetAsync(url);
-                    repoSource = " (beta repo)";
-                }
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Try beta repo without v prefix
-                    url = $"https://api.github.com/repos/{_config.OptiScalerBetas.RepoOwner}/{_config.OptiScalerBetas.RepoName}/releases/tags/{version}";
-                    DebugWindow.Log($"[Download] Trying beta repo (without v prefix): {url}");
-                    response = await _httpClient.GetAsync(url);
-                    repoSource = " (beta repo)";
-                }
-                
-                response.EnsureSuccessStatusCode();
-                DebugWindow.Log($"[Download] Release found{repoSource} for OptiScaler v{version}");
 
-                json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
+                bool apiAvailable = true;
+                try
+                {
+                    // Try stable repo with v prefix
+                    var url = $"https://api.github.com/repos/{_config.OptiScaler.RepoOwner}/{_config.OptiScaler.RepoName}/releases/tags/v{version}";
+                    DebugWindow.Log($"[Download] Trying stable repo (with v prefix): {url}");
+                    response = await _httpClient.GetAsync(url);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Try stable repo without v prefix
+                        url = $"https://api.github.com/repos/{_config.OptiScaler.RepoOwner}/{_config.OptiScaler.RepoName}/releases/tags/{version}";
+                        DebugWindow.Log($"[Download] Trying stable repo (without v prefix): {url}");
+                        response = await _httpClient.GetAsync(url);
+                    }
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Try beta repo with v prefix
+                        url = $"https://api.github.com/repos/{_config.OptiScalerBetas.RepoOwner}/{_config.OptiScalerBetas.RepoName}/releases/tags/v{version}";
+                        DebugWindow.Log($"[Download] Trying beta repo (with v prefix): {url}");
+                        response = await _httpClient.GetAsync(url);
+                        repoSource = " (beta repo)";
+                    }
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Try beta repo without v prefix
+                        url = $"https://api.github.com/repos/{_config.OptiScalerBetas.RepoOwner}/{_config.OptiScalerBetas.RepoName}/releases/tags/{version}";
+                        DebugWindow.Log($"[Download] Trying beta repo (without v prefix): {url}");
+                        response = await _httpClient.GetAsync(url);
+                        repoSource = " (beta repo)";
+                    }
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        json = await response.Content.ReadAsStringAsync();
+                    }
+                }
+                catch (Exception networkEx)
+                {
+                    apiAvailable = false;
+                    DebugWindow.Log($"[Download] GitHub API unreachable: {networkEx.Message}");
+                }
 
                 string? downloadUrl = null;
-                if (doc.RootElement.TryGetProperty("assets", out var assets))
+
+                // 3. Parse download URL from API response if available
+                if (json != null)
                 {
-                    foreach (var asset in assets.EnumerateArray())
+                    DebugWindow.Log($"[Download] Release found{repoSource} for OptiScaler v{version}");
+                    using var doc = JsonDocument.Parse(json);
+
+                    if (doc.RootElement.TryGetProperty("assets", out var assets))
                     {
-                        if (asset.TryGetProperty("browser_download_url", out var urlProp))
+                        foreach (var asset in assets.EnumerateArray())
                         {
-                            var assetUrl = urlProp.GetString();
-                            if (assetUrl != null && (assetUrl.EndsWith(".zip") || assetUrl.EndsWith(".7z")))
+                            if (asset.TryGetProperty("browser_download_url", out var urlProp))
                             {
-                                downloadUrl = assetUrl;
-                                DebugWindow.Log($"[Download] Found download asset: {Path.GetFileName(assetUrl)}");
-                                break;
+                                var assetUrl = urlProp.GetString();
+                                if (assetUrl != null && (assetUrl.EndsWith(".zip") || assetUrl.EndsWith(".7z")))
+                                {
+                                    downloadUrl = assetUrl;
+                                    DebugWindow.Log($"[Download] Found download asset: {Path.GetFileName(assetUrl)}");
+
+                                    // Update cached URL if different/missing
+                                    var cacheEntry = _releasesCache.Releases.FirstOrDefault(
+                                        r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase));
+                                    if (cacheEntry != null && string.IsNullOrEmpty(cacheEntry.DownloadUrl))
+                                    {
+                                        cacheEntry.DownloadUrl = downloadUrl;
+                                        SaveReleasesCache();
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }
                 }
 
-                if (downloadUrl == null)
-                    throw new Exception("No downloadable asset found for the specified OptiScaler version.");
+                // 4. Fall back to cached URL if API didn't yield one
+                if (downloadUrl == null && !string.IsNullOrEmpty(cachedDownloadUrl))
+                {
+                    downloadUrl = cachedDownloadUrl;
+                    DebugWindow.Log($"[Download] Using cached download URL for v{version}: {downloadUrl}");
+                }
 
+                // 5. Nothing to download from — surface a friendly error
+                if (downloadUrl == null)
+                {
+                    string reason = apiAvailable
+                        ? "No downloadable asset found for the specified OptiScaler version."
+                        : "GitHub is unreachable and no cached URL is available for this version.";
+                    throw new VersionUnavailableException(version, reason);
+                }
                 // Create folder
                 Directory.CreateDirectory(extractPath);
                 DebugWindow.Log($"[Download] Created cache directory: {extractPath}");
