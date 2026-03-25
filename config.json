@@ -33,5 +33,6 @@
             "PathSegment": "GameSave"
         }
     ],
+    "SteamGridDBApiKey": "",
     "Debug": false
 }

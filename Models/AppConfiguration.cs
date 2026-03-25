@@ -41,6 +41,8 @@ namespace OptiscalerClient.Models
         public bool AnimationsEnabled { get; set; } = true;
         public bool ShowBetaVersions { get; set; } = false;
         public ScanSourcesConfig ScanSources { get; set; } = new();
+        public string SteamGridDBApiKey { get; set; } = string.Empty;
+        public List<ScanExclusion> ScanExclusions { get; set; } = new();
     }
 
     /// <summary>

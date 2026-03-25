@@ -34,7 +34,7 @@ namespace OptiscalerClient.Views
         private double _scanDotPhase = 0;
 
         private readonly GameAnalyzerService _analyzerService = new();
-        private readonly GameMetadataService _metadataService = new();
+        private GameMetadataService _metadataService = null!;
 
         private ListBox? _lstGames;
         private TextBlock? _txtStatus;
@@ -62,6 +62,7 @@ namespace OptiscalerClient.Views
             }
             _persistenceService = new GamePersistenceService();
             _componentService = new ComponentManagementService();
+            _metadataService = new GameMetadataService(_componentService);
             App.ChangeLanguage(_componentService.Config.Language);
             if (OperatingSystem.IsWindows())
             {
